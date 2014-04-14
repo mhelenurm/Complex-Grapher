@@ -89,12 +89,13 @@ pixel* create_graph(unsigned long imageWidth, unsigned long imageHeight, long do
 				}
 			}
 
-			
+			sat = 1.0;
+			val = 1.0;
 			data[cur_index] = pixel_make_hsv(d/2.0/M_PI, sat, val);
 			graph_pos += graph_dx; //MODIFIED
 			cur_index++;
 		}
-		graph_pos = -graph_width/(long double)2.0 + cimag(graph_pos)*I; //MODIFIED
+		graph_pos = -graph_width/(long double)2.0+graph_cx + cimag(graph_pos)*I; //MODIFIED
 		graph_pos += graph_dy; //MODIFIED
 		if(uses_output && (cur_index%percent_count == 0 || cur_index==imageWidth*imageHeight))
 		{
