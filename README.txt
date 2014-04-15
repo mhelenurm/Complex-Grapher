@@ -28,5 +28,6 @@ END FUNCTIONFILE STRUCTURE
 
 ==============================================
 SCRIPT EXAMPLES:
-./runscript.exec 2560 1600 6 3.75 0 0 graph1.bmp function_x.c
-./runscript.exec 2560 1600 6 3.75 0 0 graph1.bmp function_mandlebrot.c
+./run_complexgrapher.exec 100 100 1 1 0 0 graph1.bmp function_x.c
+./run_complexgrapher.exec 2560 1600 6 3.75 0 0 graph1.bmp function_prettyblue.c
+./run_complexgrapher.exec 7680 4800 5 3.125 0.0 -0.4 graph_burning_ship.bmp function_burningship.c v
