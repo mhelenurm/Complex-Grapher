@@ -1,4 +1,5 @@
 #include "colors.h"
+#include <math.h>
 
 sample sample_make(int component)
 {

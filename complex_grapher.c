@@ -4,32 +4,13 @@
 #include <limits.h>
 #include <complex.h>
 
-#include "colors.c"
+#include "colors.h"
+#include "user_function.h"
 
-const long double K_PI = 3.1415926535897932384626433832795;
-const long double K_E  = 2.7182818284590452353602874713527;
+const double K_PI = 3.1415926535897932384626433832795;
+const double K_E  = 2.7182818284590452353602874713527;
 
-long double complex usr_fxn(long double complex x)
-{
-	return EPIC_MACRO;
-}
-
-long double complex function_1(long double complex x)
-{
-	//complex squared = complex_multiply(x, x);
-	//complex denom = complex_add(complex_make(2, 2), squared);
-	//complex num2 = complex_add(complex_make(-2, -1), x);
-	//complex ggg = complex_multiply(complex_add(squared, complex_make(-1, 0)), complex_multiply(num2, num2));
-	//return complex_divide(ggg, denom);
-	long double complex x2 = x*x;
-	const long double complex denomconst = 2+2I;
-	const long double complex numconst1 = -2-I;
-	const long double complex numconst2 = -1;
-	long double complex num = x+numconst1;
-	return (x2+numconst2)*num*num/(x2+denomconst);
-}
-
-pixel* create_graph(unsigned long imageWidth, unsigned long imageHeight, long double graph_width, long double graph_height, long double graph_cx, long double graph_cy, long double complex (*fxn)(long double complex), unsigned int is_verbose)
+pixel* create_graph(unsigned long imageWidth, unsigned long imageHeight, double graph_width, double graph_height, double graph_cx, double graph_cy, unsigned int is_verbose)
 {
 	pixel* data = (pixel*)malloc(sizeof(pixel)*imageWidth*imageHeight);
 	if (ULONG_MAX/imageWidth < imageHeight)
@@ -37,76 +18,66 @@ pixel* create_graph(unsigned long imageWidth, unsigned long imageHeight, long do
 		printf("Image width (%lu) and height (%lu) are too large (their product is a ulong overflow).", imageWidth, imageHeight);
 		exit(1);
 	}
-	long double complex graph_dx = graph_width/(long double)(imageWidth-1);
-	long double complex graph_dy = graph_height/(long double)(imageHeight-1)*I; //MODIFIED
+	double complex graph_dx = graph_width/(long double)(imageWidth-1);
+	double complex graph_dy = graph_height/(long double)(imageHeight-1)*I;
 
-	//printf("DY: %f, %f\n", creal(graph_dy), cimag(graph_dy));
+	double complex graph_pos = (-graph_width/2.0+graph_cx) + (-graph_height/2.0+graph_cy)*I;
 
-	long double complex graph_pos = (-graph_width/2.0+graph_cx) + (-graph_height/2.0+graph_cy)*I;//complex_make(-graph_width/(long double)2.0+graph_cx, -graph_height/(long double)2.0+graph_cy);
-	//printf("POS: %f, %f\n", creal(graph_pos), cimag(graph_pos));
 	unsigned int uses_output = (imageWidth*imageHeight > 1000*1000) && is_verbose;
 	unsigned long cur_index = 0;
 	unsigned long print_percent = 5;
-	unsigned long percent_count = imageWidth*imageHeight/100;
-	if(uses_output)
+	unsigned long percent_count = imageWidth*imageHeight/100; //every percent_count iterations of the loop represents a percent
+
+	double complex transformed; //this will represent the output of the complex function
+	
+
+	if(is_verbose) //if we're being verbose
 	{
 		printf("\nRendering graph...\n");
 	}
-
-	for(unsigned long row = 0; row < imageHeight; row++)
+	for(unsigned long row = 0; row < imageHeight; row++) //for every row
 	{
-		for(unsigned long col = 0; col < imageWidth; col++)
+		for(unsigned long col = 0; col < imageWidth; col++) //for every column
 		{
-			//printf("%f, %f\n", creal(graph_pos), cimag(graph_pos));
-			long double complex ggg = fxn(graph_pos);
-		
-			long double d = carg(ggg);//complex_argument(ggg);
-			while(d < 0)
-			{
-				d+=K_PI*2.0;
-			}
-			while(d>K_PI*2.0)
-			{
-				d-=K_PI*2.0;
-			}
-			long double m = cabs(ggg);//complex_magnitude(ggg);
-			long double sat = 1.0;
-			long double val = 1.0;
+			transformed = function(graph_pos);
 
-			if(m < 1.0)
+			double arg = carg(transformed)/M_PI/2.0 + 0.5; //angle percent [-pi, pi] -> [-1, 1] -> [-.5, .5] -> [0, 1]
+			double mag = cabs(transformed);
+
+			double sat = 1.0;
+			double val = 1.0;
+
+			if(mag < 1.0) //if the magnitude is less than one do something special
 			{
-				val = powl(m, .5);
+				val = pow(mag, .5);
 			} else {
-				long double log = logl(m);
-				long double limit = 10.0;
-				if(log > limit)
+				double logar = log(mag);
+				double limit = 10.0;
+				if(logar > limit)//if the magnitude is fuckin' huge we do this:
 				{
-					long double percent =  (log-limit)/limit;
+					double percent =  (logar-limit)/limit/10.0;
 					sat = 1.0-((percent<1.0)?percent:1.0);
-					
-					//val = 1.0-sat;
-					//sat = m/10.0;
 				}
 			}
-
 			sat = 1.0;
 			val = 1.0;
-			data[cur_index] = pixel_make_hsv(d/2.0/M_PI, sat, val);
-			graph_pos += graph_dx; //MODIFIED
+			data[cur_index] = pixel_make_hsv(arg, sat, val);
+			graph_pos += graph_dx;
 			cur_index++;
 		}
-		graph_pos = -graph_width/(long double)2.0+graph_cx + cimag(graph_pos)*I; //MODIFIED
-		graph_pos += graph_dy; //MODIFIED
-		if(uses_output && (cur_index%percent_count == 0 || cur_index==imageWidth*imageHeight))
+		graph_pos = -graph_width/(long double)2.0+graph_cx + cimag(graph_pos)*I;
+		graph_pos += graph_dy;
+
+		if(uses_output && (cur_index%percent_count == 0 || cur_index==imageWidth*imageHeight)) //if we're printing percentages and this iteration is an exact percentage
 		{
-			unsigned long percent = (cur_index != imageWidth*imageHeight)?cur_index/percent_count:100;
-			if(percent%print_percent == 0)
+			unsigned long percent = (cur_index != imageWidth*imageHeight)?cur_index/percent_count:100; //the percent; 100 percent is hard to be exact about, so we have a special case for it
+			if(percent%print_percent == 0) //we only wanna print every "print_percent" percentages
 			{
-				printf("%lu%c...\n", percent, '%');
+				printf("%lu%c...\n", percent, '%'); //print the percentage
 			}
 		}
 	}
-	if(uses_output)
+	if(is_verbose) //if we're being verbose
 	{
 		printf("Done rendering graph.\n\n");
 	}
@@ -150,10 +121,10 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 
-	long double graph_width = strtold(argv[3], NULL);
-	long double graph_height = strtold(argv[4], NULL);
-	long double cx = strtold(argv[5], NULL);
-	long double cy = strtold(argv[6], NULL);
+	double graph_width = atof(argv[3]);
+	double graph_height = atof(argv[4]);
+	double cx = atof(argv[5]);
+	double cy = atof(argv[6]);
 
 	if(graph_width <= 0 || graph_height <= 0)
 	{
@@ -184,17 +155,18 @@ int main(int argc, char* argv[])
 	info[26] = (unsigned char)( sizeData>>16);
 	info[27] = (unsigned char)( sizeData>>24);
 	
-	pixel* pixels = create_graph(w, h, graph_width, graph_height, cx, cy, &usr_fxn, is_verbose);
+	pixel* pixels = create_graph(w, h, graph_width, graph_height, cx, cy, is_verbose);
 	if(is_verbose)
 	{
 		printf("Writing file...\n");	
 	}
+
 	FILE* bmpFile = fopen(argv[7], "w");
 	fwrite(header, 1, sizeof(header), bmpFile);
 	fwrite(info, 1, sizeof(info), bmpFile);
-	fwrite(pixels, 4, w*h, bmpFile);
-	
+	fwrite(pixels, 4, w*h, bmpFile);	
 	fclose(bmpFile);
+
 	if(is_verbose)
 	{
 		printf("File written. Cleaning memory.\n\n");

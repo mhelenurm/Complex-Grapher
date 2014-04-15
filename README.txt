@@ -1,15 +1,32 @@
 Complex-Grapher
-===============
+==============================================
 
 A c program that creates BMP images of complex functions.
 
 The shell script ("runscript.exec") takes several arguments and compiles and runs the program with the arguments.
 
+==============================================
 FORMAT:
-./runscript.exec [imagewidth] [imageheight] [graphwidth] [graphheight] [graph center x] [graph center y] [output filename] "[function]".
+./runscript.exec [imagewidth] [imageheight] [graphwidth] [graphheight] [graph center x] [graph center y] [output filename] [functionfilename].c
+==============================================
 
-The function must be in quotes. The variable is in terms of "x" and any library functions defined in C99's <complex.h> are fair game to use.
+FUNCTIONFILE FORMAT: (the functionfile is the file that does the complex transformations)
+NAME: [functionfilename].c
 
-EXAMPLES:
-./runscript.exec 2560 1600 6 3.75 0 0 graph1.bmp "(x^2)/(x-3-2*I)"
-./runscript.exec 2560 1600 6 3.75 0 0 graph1.bmp "csin(1/x)"
+FUNCTIONFILE STRUCTURE:
+==============================================
+#include "user_function.h"
+
+double complex function(double complex x)
+{
+	//free to do whatever in here
+	//return the transformed x
+}
+==============================================
+END FUNCTIONFILE STRUCTURE
+
+
+==============================================
+SCRIPT EXAMPLES:
+./runscript.exec 2560 1600 6 3.75 0 0 graph1.bmp function_x.c
+./runscript.exec 2560 1600 6 3.75 0 0 graph1.bmp function_mandlebrot.c
