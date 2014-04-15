@@ -82,3 +82,30 @@ sample pixel_blue(pixel p)
 {
 	return (sample)p & SAMPLE_MASK;
 }
+
+#include <stdio.h>
+void pixel_convert_to_16bpp(pixel p, unsigned char* loc)
+{
+	unsigned char r = (pixel_red(p)>>3)&0x1F;
+	unsigned char g = (pixel_green(p)>>3)&0x1F;
+	unsigned char b = (pixel_blue(p)>>3)&0x1F;
+	unsigned short sum = (r<<10) + (g<<5) + (b);
+	
+	loc[1] = (sum>>8)&0xFF;
+	loc[0] = sum&0xFF;	
+}
+
+void pixel_convert_to_24bpp(pixel p, unsigned char* loc)
+{
+	loc[2] = pixel_red(p);
+	loc[1] = pixel_green(p);
+	loc[0] = pixel_blue(p);
+}
+
+void pixel_convert_to_32bpp(pixel p, unsigned char* loc)
+{
+	loc[3] = pixel_alpha(p);
+	loc[2] = pixel_red(p);
+	loc[1] = pixel_green(p);
+	loc[0] = pixel_blue(p);
+}

@@ -5,6 +5,7 @@
 #include <complex.h>
 
 #include "colors.h"
+#include "bitmap.h"
 #include "user_function.h"
 
 const double K_PI = 3.1415926535897932384626433832795;
@@ -41,7 +42,12 @@ pixel* create_graph(unsigned long imageWidth, unsigned long imageHeight, double 
 		{
 			transformed = function(graph_pos);
 
-			double arg = carg(transformed)/M_PI/2.0 + 0.5; //angle percent [-pi, pi] -> [-1, 1] -> [-.5, .5] -> [0, 1]
+			double arg = carg(transformed);
+			if(arg<0)
+			{
+				arg+=M_PI*2.0;
+			}
+			arg/=M_PI*2.0;
 			double mag = cabs(transformed);
 
 			double sat = 1.0;
@@ -59,9 +65,10 @@ pixel* create_graph(unsigned long imageWidth, unsigned long imageHeight, double 
 					sat = 1.0-((percent<1.0)?percent:1.0);
 				}
 			}
-			sat = 1.0;
-			val = 1.0;
+			//sat = 1.0;
+			//val = 1.0;
 			data[cur_index] = pixel_make_hsv(arg, sat, val);
+
 			graph_pos += graph_dx;
 			cur_index++;
 		}
@@ -86,27 +93,6 @@ pixel* create_graph(unsigned long imageWidth, unsigned long imageHeight, double 
 
 int main(int argc, char* argv[])
 {
-	unsigned char header[14] = {
-		'B', 'M', //magic numbers
-		0, 0, 0, 0, //size of file in bytes
-		0, 0, //app data
-		0, 0, //app data
-		40+14, 0, 0, 0 //start of data offset
-	};
-
-	unsigned char info[40] = {
-		40,0,0,0, // info hd size
-		0,0,0,0, // width
-		0,0,0,0, // heigth
-		1,0, // number color planes
-		32,0, // bits per pixel
-		0,0,0,0, // compression is none
-		0,0,0,0, // image bits size
-		0x13,0x0B,0,0, // horz resoluition in pixel / m
-		0x13,0x0B,0,0, // vert resolutions (0x03C3 = 96 dpi, 0x0B13 = 72 dpi)
-		0,0,0,0, // #colors in pallete
-		0,0,0,0, // #important colors
-	};
 	if(argc < 8)
 	{
 		printf("Too few arguments. Usage: ./a.out imw imh gw gy cx cy filename");
@@ -132,40 +118,13 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 	
-	unsigned long sizeData = w*h*4;
-	unsigned long sizeAll = sizeData+sizeof(header)+sizeof(info);
-
-	header[ 2] = (unsigned char)( sizeAll    );
-	header[ 3] = (unsigned char)( sizeAll>> 8);
-	header[ 4] = (unsigned char)( sizeAll>>16);
-	header[ 5] = (unsigned char)( sizeAll>>24);
-	
-	info[ 4] = (unsigned char)( w   );
-	info[ 5] = (unsigned char)( w>> 8);
-	info[ 6] = (unsigned char)( w>>16);
-	info[ 7] = (unsigned char)( w>>24);
-	
-	info[ 8] = (unsigned char)( h    );
-	info[ 9] = (unsigned char)( h>> 8);
-	info[10] = (unsigned char)( h>>16);
-	info[11] = (unsigned char)( h>>24);
-	
-	info[24] = (unsigned char)( sizeData    );
-	info[25] = (unsigned char)( sizeData>> 8);
-	info[26] = (unsigned char)( sizeData>>16);
-	info[27] = (unsigned char)( sizeData>>24);
-	
 	pixel* pixels = create_graph(w, h, graph_width, graph_height, cx, cy, is_verbose);
+
 	if(is_verbose)
 	{
 		printf("Writing file...\n");	
 	}
-
-	FILE* bmpFile = fopen(argv[7], "w");
-	fwrite(header, 1, sizeof(header), bmpFile);
-	fwrite(info, 1, sizeof(info), bmpFile);
-	fwrite(pixels, 4, w*h, bmpFile);	
-	fclose(bmpFile);
+	bitmap_write(w, h, pixels, BITMAP_24BPP, argv[7]);
 
 	if(is_verbose)
 	{
