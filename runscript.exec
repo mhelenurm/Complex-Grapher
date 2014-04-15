@@ -1,3 +1,4 @@
 gcc complex_grapher.c colors.c bitmap.c $8 -O3
 ./a.out $1 $2 $3 $4 $5 $6 $7 $9
+rm a.out
 open $7

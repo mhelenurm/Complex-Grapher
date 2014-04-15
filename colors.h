@@ -18,8 +18,4 @@ extern sample pixel_red(pixel p);
 extern sample pixel_green(pixel p);
 extern sample pixel_blue(pixel p);
 
-extern void pixel_convert_to_16bpp(pixel p, unsigned char* loc);
-extern void pixel_convert_to_24bpp(pixel p, unsigned char* loc);
-extern void pixel_convert_to_32bpp(pixel p, unsigned char* loc);
-
 #endif

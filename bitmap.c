@@ -5,6 +5,32 @@
 #include <math.h>
 #include <limits.h>
 
+void pixel_convert_to_16bpp(pixel p, unsigned char* loc)
+{
+        unsigned char r = (pixel_red(p)>>3)&0x1F;
+        unsigned char g = (pixel_green(p)>>3)&0x1F;
+        unsigned char b = (pixel_blue(p)>>3)&0x1F;
+        unsigned short sum = (r<<10) + (g<<5) + (b);
+
+	loc[0] = sum&0xFF;
+        loc[1] = (sum>>8)&0xFF;
+}
+
+void pixel_convert_to_24bpp(pixel p, unsigned char* loc)
+{
+        loc[0] = pixel_blue(p);
+        loc[1] = pixel_green(p);
+        loc[2] = pixel_red(p);
+}
+
+void pixel_convert_to_32bpp(pixel p, unsigned char* loc)
+{
+        loc[0] = pixel_blue(p);
+        loc[1] = pixel_green(p);
+        loc[2] = pixel_red(p);
+        loc[3] = pixel_alpha(p);
+}
+
 unsigned int bitmap_write(unsigned long width, unsigned long height, pixel* data, unsigned int bpp, char* filename)
 {
 	if(width==0 || height == 0 || data == 0 || bpp>2 || filename == 0)
@@ -36,12 +62,21 @@ unsigned int bitmap_write(unsigned long width, unsigned long height, pixel* data
                 BITMAP_HEADER_SIZE_BYTES+BITMAP_INFO_SIZE_BYTES, 0, 0, 0 //start of data offset
         };
 
+	unsigned short colorscheme = 16;
+	if(bpp == BITMAP_24BPP)
+	{
+		colorscheme = 24;
+	} else if(bpp == BITMAP_32BPP)
+	{
+		colorscheme = 32;
+	}
+
 	unsigned char bitmap_info[BITMAP_INFO_SIZE_BYTES] = {
                 40,0,0,0, // info hd size
                 0,0,0,0, // width
                 0,0,0,0, // heigth
                 1,0, // number color planes
-                bits_per_pixel,0, // bits per pixel
+                (unsigned char)(colorscheme&0xFF),(unsigned char)((colorscheme>>8)&0xFF), // bits per pixel
                 0,0,0,0, // compression is none
                 0,0,0,0, // image bits size
                 0x13,0x0B,0,0, // horz resoluition in pixel / m

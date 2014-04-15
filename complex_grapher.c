@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
 	{
 		printf("Writing file...\n");	
 	}
-	bitmap_write(w, h, pixels, BITMAP_24BPP, argv[7]);
+	bitmap_write(w, h, pixels, BITMAP_32BPP, argv[7]);
 
 	if(is_verbose)
 	{
