@@ -1,5 +1,4 @@
-Complex-Grapher
-==============================================
+# Complex-Grapher
 
 A c program that creates BMP images of complex functions.
 
